@@ -1,0 +1,17 @@
+{
+    "name": "aero17xe5/app",
+    "autoload": {
+        "psr-4": {
+            "Aero17xe5\\App\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Grigori Koblitskiy",
+            "email": "koblicky.g.a@effective-group.ru"
+        }
+    ],
+    "require": {
+      "ext-redis": "*"
+    }
+}

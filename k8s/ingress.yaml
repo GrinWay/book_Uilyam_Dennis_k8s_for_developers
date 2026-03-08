@@ -1,0 +1,38 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: generic-ingress
+  annotations:
+    # let's encrypt №1
+    cert-manager.io/cluster-issuer: letsencrypt
+spec:
+  # kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.13.1/deploy/static/provider/cloud/deploy.yaml
+  ingressClassName: nginx
+  tls:
+    - secretName: tls-cert
+      # let's encrypt №2
+      hosts:
+        - grinvpn.online
+        - robo.ru
+
+  rules:
+    - host: grinvpn.online
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: app
+                port:
+                  number: 80
+    - host: robo.ru
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: robo-hash-service
+                port:
+                  number: 80

@@ -1,0 +1,14 @@
+# kubectl get storageclass standard -o yaml > storage_class.yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass # Класс хранения, ответственен за хранение в PV
+metadata:
+  annotations:
+    # Optional: Использовать этот storage class by default?
+    storageclass.kubernetes.io/is-default-class: "true"
+  name: my-standard
+parameters:
+  type: pd-standard
+provisioner: k8s.io/minikube-hostpath
+reclaimPolicy: Delete # Delete - Удалить PV после удаления PVC.
+                       # Retain - PV живёт своей жизнью, отдельно от k8s. Сохранить PV ни смотря ни на что (после удаления PVC или кластера).
+volumeBindingMode: Immediate

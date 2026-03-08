@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: app-redis-add-task
+spec:
+  # job level
+  backoffLimit: 2
+  template:
+    spec:
+      # pod level
+      restartPolicy: Never # Never, OnFailure
+      containers:
+        - name: app-redis-add-task-container
+          image: 'redis:8.6.1'
+          command:
+            - 'redis-cli'
+            - '-h'
+            - 'app-redis-v1-0.app-redis-service.default'
+            - 'RPUSH'
+            - 'queue'
+            - 'task3'
+          resources:
+            requests:
+              cpu: '100m'
+              memory: '10Mi'

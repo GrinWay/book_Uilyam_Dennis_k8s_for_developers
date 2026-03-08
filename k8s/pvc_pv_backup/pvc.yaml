@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    #pv.kubernetes.io/bind-completed: "yes" # deleted
+    pv.kubernetes.io/bound-by-controller: "yes"
+    volume.beta.kubernetes.io/storage-provisioner: k8s.io/minikube-hostpath
+    volume.kubernetes.io/storage-provisioner: k8s.io/minikube-hostpath
+  creationTimestamp: "2026-03-07T10:56:47Z"
+  finalizers:
+  - kubernetes.io/pvc-protection
+  labels:
+    pod: app-redis-pod-label-v1
+  name: app-redis-pvc-app-redis-v1-0
+  resourceVersion: "15553"
+  uid: bf2df702-9280-4a9b-b202-1054a1a072ed
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi
+  storageClassName: ''
+  volumeMode: Filesystem
+  volumeName: pvc-bf2df702-9280-4a9b-b202-1054a1a072ed
+status:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 500Mi
+  phase: Bound

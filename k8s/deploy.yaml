@@ -1,0 +1,213 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  # <app name>-<type>-<version for the blue-green not standard updating strategy>
+  name: app-v1
+# annotations:
+#  kubernetes.io/change-cause: 'err k8s v1'
+spec:
+
+  replicas: 1
+
+  # Идеален для обычных minor, patch version обновлений
+  # strategy:
+  #   type: RollingUpdate
+  #   rollingUpdate:
+
+  # HIGH PRIORITY
+  # 0   - slow updating
+  # >0  - updating faster
+  #     maxUnavailable: 1
+
+  # 0   - slow updating
+  # >0  - updating faster
+  #     maxSurge: 0          # 1 - только 1 под с новой версией, пока старый под не удалён
+
+  # Идеален для dev, test
+  strategy:
+    type: Recreate
+
+  # Идеален для обновления major version у нескольких микросервисов если это микросервисная архитектура
+  # blue-green
+  #  SERVICE
+  #   name is const
+  #   pod selector is dynamic
+  #  DEPLOY
+  #   name is dynamic
+  #   pod selector is dynamic
+  #   pod label is dynamic
+  #   container version is dynamic
+
+  selector:
+    matchLabels:
+      pod: app-pod-label-v1
+
+  # pod's template
+  template:
+    metadata:
+      labels:
+        pod: app-pod-label-v1
+    spec:
+      terminationGracePeriodSeconds: 2
+      # Топология распределения replicas
+      topologySpreadConstraints:
+        - maxSkew: 1 # 1 === Топология содержит не более 1-й реплики по сравнению с другими топологиями
+          topologyKey: 'kubernetes.io/hostname' # topologyKey === node scope
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              pod: app-pod-label-v1
+      priorityClassName: app-high-priority
+
+      # Обход ограничений размещения pod на Node (taint)
+      tolerations:
+        - operator: Exists
+      #        - key: # key is empty, operator "Exists" matches all keys
+      #          operator: Exists # checks key existence
+      #          effect: NoExecute
+      #      tolerations:
+      #        - key: spot
+      #          value: "true"
+      #          operator: Equal
+      #          effect: NoSchedule
+
+      # Селектор узла
+      #      nodeSelector:
+      #        kubernetes.io/arch: amd64
+
+      # Предпочтение узла
+      #      affinity:
+      #        nodeAffinity: # предпочтение по node
+      #        podAffinity:   # предпочтение по node и другому pod
+      #        podAntiAffinity:   # избегай topology с другими pod
+      #          requiredDuringSchedulingIgnoredDuringExecution:
+      #            - topologyKey: 'kubernetes.io/hostname' # topologyKey === node scope
+      #              labelSelector:
+      #                matchExpressions:
+      #                  - key: pod
+      #                    operator: In
+      #                    values:
+      #                      - app-pod-label-v1
+      #            nodeSelectorTerms: # label
+      #              - matchExpressions:
+      #                  - key: kubernetes.io/arch
+      #                    operator: In
+      #                    values:
+      #                      - arm64
+
+      #          preferredDuringSchedulingIgnoredDuringExecution:
+      #            - weight: 100 # приоритет предпочтений (если их несколько)
+      #              preference:
+      #                matchExpressions:
+      #                  - key: kubernetes.io/arch
+      #                    operator: In
+      #                    values:
+      #                      - arm64
+
+      imagePullSecrets:
+        - name: app-secret
+
+      # Определение хранилища
+      volumes:
+        - name: app-volume
+          persistentVolumeClaim: # emptyDir {} - меж-контейнерное эфемерное хранилище в пределах одного pod
+                                 # configMap:
+                                 # persistentVolumeClaim
+            claimName: app-volume-claim
+      containers:
+        #   - name: app-trash-container
+        #     image: 'cr.selcloud.ru/grinway/k8s_test:v13'
+        #     ports: # Не публикует порт, а является информацией для других объектов сервиса
+        #       - containerPort: 81
+        #     resources:
+        #       requests:
+        #         cpu: '20m'
+        #         memory: '20Mi'
+        - name: app-container
+          # Использование хранилища
+          volumeMounts:
+            - name: app-volume
+              mountPath: /var/app/cache
+          #          env:
+          #            - name: APP_HOST
+          #              value: '$(APP_SERVICE_HOST)'
+
+          # WORK: grinway/k8s_test:v3 grinway/k8s_test:v4 ERR: docker-app:v12
+          # cr.selcloud.ru/grinway/k8s_test:v14
+          image: 'grinway/k8s_test:v15' # 1 Локальный образ
+          #     imagePullPolicy: Never # 2 Локальная политика извлечения образов
+          # 3 RUN: minikube image load
+
+          #     command:
+          #       - sleep
+          #     args:
+          #       - infinity
+
+          ports:
+            - containerPort: 80
+
+          resources:
+
+            # Классы потребления ресурсов (гарантированное, стабильное, на самотёк):
+            #  - гарантированный, когда requests === limits for all containers                                                           (самая стабильная работа pod)
+            #  - потенциально временное избыточное потребление, когда не смог стать гарантированным и хотя бы 1 контейнер имеет requests (лучше, чем ничего)
+            #  - лучшее из возможного, когда нет ни requests, ни limits                                                                  (ничего)
+
+            # Запросы использует Scheduler на master node для определения где запускать pod
+            requests:
+              cpu: '20m'   # 200m = 200 миллиядер = 20% процессора = 0.2
+              memory: '20Mi'  # 1Gi  = 1 * 1024^3 Гибибайтов. 1G = 1 * 1000^3 Гигабайтов.
+
+            # Лимиты использует kubelet на worker node для перезапуска и регулирования времени выполнения pod
+          #       limits:
+          #         cpu: '20m'
+          #         memory: '20Mi'
+
+          # RUNNING (init running)
+          livenessProbe:
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            httpGet:
+              path: /
+              port: 80
+              scheme: HTTP
+            timeoutSeconds: 4
+            failureThreshold: 10 # 10
+            successThreshold: 1
+
+          # READY (init not ready)
+          readinessProbe:
+            periodSeconds: 30
+            httpGet:
+              path: /
+              port: 80
+              scheme: HTTP
+            timeoutSeconds: 2
+            failureThreshold: 1
+            successThreshold: 1
+---
+# Чем выше приоритет, тем:
+#  - быстрее запуск pod     (быстрее выделение ресурсов)
+#  - позже ранжирование pod (позже освобождение ресурсов)
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: app-high-priority
+value: 1                # May be negative
+globalDefault: false
+preemptionPolicy: Never # Политика вытеснения.
+  # Never - не вытесняй другие pod если нет свободных ресурсов, просто ждём.
+# PreemptLowerPriority - вытеснить pod с более низким приоритетом.
+description: 'High priority class'
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: app-volume-claim
+spec:
+#  storageClassName: my-standard
+  accessModes:
+    - ReadWriteOnce # ReadWriteOnce - Монтирование только для 1-го pod
+  resources:
+    requests:
+      storage: 2Gi

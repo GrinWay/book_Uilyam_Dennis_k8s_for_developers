@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+ name: app
+spec:
+ selector:
+  pod: app-redis-pod-label-v1
+ type: ClusterIP # NodePort - порт выделяется на сервере, но ведёт на порт pod container
+ ports:
+ - protocol: TCP
+   port: 6379
+   #targetPort: 80 # default is port

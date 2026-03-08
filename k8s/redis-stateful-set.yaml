@@ -1,0 +1,133 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: app-redis-v1
+spec:
+  selector:
+    matchLabels:
+      pod: app-redis-pod-label-v1
+  serviceName: app-redis-service
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        pod: app-redis-pod-label-v1
+    spec:
+      terminationGracePeriodSeconds: 2
+      initContainers: # Раскидывает конфиги (pod init step)
+        - name: init-app-redis
+          image: 'ubuntu:24.04'
+
+          volumeMounts:
+            # configs for init controllers
+            - name: app-redis-configmap-volume
+              mountPath: '/mnt/app-redis-configmap'
+
+              # real config
+            - name: app-redis-config
+              mountPath: '/redis/conf'
+
+          command:
+            - 'bash'
+            - '-c'
+            - |
+              # -e = errexit
+              # -x = xtrace
+              set -ex
+              
+              [[ $(hostname) =~ [-]([0-9]++)$ ]] || exit 1
+              hostId=${BASH_REMATCH[1]}
+              
+              if [[ $hostId -eq 0 ]]; then
+                cp /mnt/app-redis-configmap/master.conf /redis/conf/redis.conf
+              else
+                cp /mnt/app-redis-configmap/replica.conf /redis/conf/redis.conf
+              fi
+              
+              cat /redis/conf/redis.conf
+      containers:
+        - image: 'redis:8.6.1'
+          name: app-redis
+          command: [ "redis-server" ]
+          args: [ "/redis/conf/redis.conf" ]
+
+          volumeMounts:
+            # real config
+            - name: app-redis-config
+              mountPath: '/redis/conf'
+
+              # storage
+            - name: app-redis-pvc
+              mountPath: '/redis/data'
+
+#            - name: ephemeral
+#              mountPath: '/a/b/c/'
+
+          resources:
+            requests:
+              cpu: '1'
+              memory: '1Gi'
+      # pod level
+      volumes:
+        - name: app-redis-configmap-volume
+          configMap: # read-only
+            name: app-redis-configmap
+        - name: app-redis-config
+          emptyDir: { } # межконтейнерное хранилище
+#        - name: ephemeral
+#          ephemeral:
+#            volumeClaimTemplate:
+#              metadata:
+#                labels:
+#                  type: abc-volume
+#              spec:
+#                accessModes:
+#                  - ReadWriteOnce
+#                storageClassName: "my-standard"
+#                resources:
+#                  requests:
+#                    storage: '1Gi'
+
+  # sts level
+  volumeClaimTemplates:
+    - metadata:
+        name: app-redis-pvc
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: '500Mi'
+---
+apiVersion: v1
+kind: Service # for DNS name of server
+metadata:
+  name: app-redis-service
+spec:
+  ports:
+    - port: 6379
+  clusterIP: None # None = Headless service
+  # A-type запись (IP каждого пода), не виртуальный внутрикластерный IP
+  selector:
+    pod: app-redis-pod-label-v1
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-redis-configmap
+data:
+  # key   is file name
+  # value is file content
+  master.conf: |
+    bind 0.0.0.0
+    port 6379
+    protected-mode no
+    appendonly yes
+    dir /redis/data
+  replica.conf: |
+    replicaof app-redis-v1-0.app-redis-service.default 6379
+    bind 0.0.0.0
+    port 6379
+    protected-mode no
+    appendonly yes
+    dir /redis/data

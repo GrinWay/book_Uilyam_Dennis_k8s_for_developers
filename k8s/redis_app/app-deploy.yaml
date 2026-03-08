@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-v18
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      pod: app-pod-label-v18
+  template:
+    metadata:
+      labels:
+        pod: app-pod-label-v18
+    spec:
+      terminationGracePeriodSeconds: 2
+      containers:
+        - name: app-container
+          image: 'grinway/k8s_test:v18'
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: '20m'
+              memory: '20Mi'
+          livenessProbe:
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            httpGet:
+              path: /
+              port: 80
+              scheme: HTTP
+            timeoutSeconds: 4
+            failureThreshold: 10 # 10
+            successThreshold: 1
+          readinessProbe:
+            periodSeconds: 30
+            httpGet:
+              path: /
+              port: 80
+              scheme: HTTP
+            timeoutSeconds: 2
+            failureThreshold: 1
+            successThreshold: 1

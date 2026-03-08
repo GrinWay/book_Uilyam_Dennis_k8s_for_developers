@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: app-work-job-v18
+spec:
+  backoffLimit: 2
+  parallelism: 2
+  template:
+    metadata:
+      labels:
+        pod: app-work-job-v18
+    spec:
+      containers:
+        - name: app-work-job-container-v18
+          image: 'grinway/k8s_test:v18'
+          command:
+            - php
+          args:
+            - '/app/scripts/forewer.php'
+      restartPolicy: OnFailure

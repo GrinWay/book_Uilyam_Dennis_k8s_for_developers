@@ -1,0 +1,21 @@
+services:
+  app:
+    container_name: app
+    build:
+      context: ..
+      dockerfile: ./docker/app/Dockerfile
+    environment:
+      APP_HOST: 'localhost'
+    ports:
+      - '80:80'
+    depends_on:
+      - redis
+  redis:
+    container_name: app-redis-read
+    networks:
+      default:
+        aliases:
+          - app-redis-read
+    image: 'redis:8.6.1'
+    ports:
+      - '6379:6379'

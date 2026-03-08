@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-work-v18
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      pod: app-work-pod-label-v18
+  template:
+    metadata:
+      labels:
+        pod: app-work-pod-label-v18
+    spec:
+      terminationGracePeriodSeconds: 2
+      containers:
+        - name: app-container
+          image: 'grinway/k8s_test:v18'
+          command:
+            - php
+          args:
+            - '/app/scripts/forewer.php'
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: '20m'
+              memory: '20Mi'
+          livenessProbe:
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 4
+            exec:
+              command:
+                - pgrep
+                - php
+            failureThreshold: 10 # 10
+            successThreshold: 1
+          readinessProbe:
+            periodSeconds: 30
+            timeoutSeconds: 2
+            exec:
+              command:
+                - pgrep
+                - php
+            failureThreshold: 1
+            successThreshold: 1

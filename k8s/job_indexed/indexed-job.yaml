@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: indexed-job
+spec:
+  backoffLimit: 2
+  parallelism: 5
+  completions: 10
+  completionMode: Indexed
+  template:
+    metadata:
+      labels:
+        pod: indexed-job-label
+    spec:
+      containers:
+        - name: indexed-job-container
+          image: 'ubuntu:24.04'
+          command:
+            - echo
+            - 'Indexed completion: $(JOB_COMPLETION_INDEX)'
+      restartPolicy: Never

@@ -1,0 +1,13 @@
+# Чем выше приоритет, тем:
+#  - быстрее запуск pod     (быстрее выделение ресурсов)
+#  - позже ранжирование pod (позже освобождение ресурсов)
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+ name: app-high-priority
+value: 1                # May be negative
+globalDefault: false
+preemptionPolicy: Never # Политика вытеснения.
+                        # Never - не вытесняй другие pod если нет свободных ресурсов, просто ждём.
+                        # PreemptLowerPriority - вытеснить pod с более низким приоритетом.
+description: 'High priority class'
