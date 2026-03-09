@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-sleep-inf-v18
+spec:
+  replicas: 4
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 5 # replicas / 2
+      maxUnavailable: 1 # 1
+  selector:
+    matchLabels:
+      pod: app-pod-label-sleep-inf-v18
+  template:
+    metadata:
+      labels:
+        pod: app-pod-label-sleep-inf-v18
+    # PodSpec
+    spec:
+      terminationGracePeriodSeconds: 2
+      # pod req
+      # +nodeAffinity
+      # +podAffinity close to selector
+      # +podAffinity far from selector
+      #  cpu: power
+#      affinity:
+#        podAffinity:
+#          requiredDuringSchedulingIgnoredDuringExecution:
+#            - topologyKey: 'kubernetes.io/hostname'
+#              labelSelector:
+#                matchExpressions:
+#                  - operator: NotIn
+#                    key: pod
+#                    values:
+#                      - app-pod-label-v18
+
+      # node req
+      tolerations:
+        - operator: Exists
+      containers:
+        - name: app-container
+          image: 'ubuntu:24.04'
+          command:
+            - sleep
+          args:
+            - infinity
+          resources:
+            requests:
+              cpu: '20m'
+              memory: '20Mi'

@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: app-daemon-set
+# DaemonSetSpec
+spec:
+  selector:
+    matchLabels:
+      pod: app-pod-label-v18
+  template:
+    metadata:
+      labels:
+        pod: app-pod-label-v18
+    # PodSpec
+    spec:
+      terminationGracePeriodSeconds: 2
+      volumes:
+        - name: sys-log-volume
+          hostPath:
+            path: /var/log/
+      containers:
+        - name: sys-log-container
+          image: 'grinway/k8s_test:v18'
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534 # 65534 === nobody
+            runAsGroup: 65534 # 65534 === nobody
+            allowPrivilegeEscalation: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 10Mi
+              ephemeral-storage: 100Mi
+          command:
+            - sh
+            - '-c'
+            - |
+              tail -f /var/log/*.log
+              tail -f /var/log/**/*.log
+              tail -f /var/log/**/**/*.log
+          volumeMounts:
+            - name: sys-log-volume
+              mountPath: /var/log/
+              readOnly: true

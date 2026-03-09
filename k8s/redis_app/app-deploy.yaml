@@ -3,7 +3,12 @@ kind: Deployment
 metadata:
   name: app-v18
 spec:
-  replicas: 3
+  replicas: 4
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 5 # replicas / 2
+      maxUnavailable: 1 # 1
   selector:
     matchLabels:
       pod: app-pod-label-v18
@@ -11,17 +16,74 @@ spec:
     metadata:
       labels:
         pod: app-pod-label-v18
+    # PodSpec
     spec:
       terminationGracePeriodSeconds: 2
+      # pod req
+#      nodeSelector:
+#        cpu: slow
+      # node req
+      tolerations:
+        - operator: Exists
+      initContainers:
+        - name: 'show-secret-env-container'
+          image: 'ubuntu:24.04'
+          volumeMounts:
+            - name: pod-containers-volume
+              mountPath: '/usr/share/nginx/html/'
+          command:
+            - /bin/sh
+            - -c
+            - |
+              RAND=$(hostname; date +%s%N)
+              cat > /usr/share/nginx/html/index.html <<EOF
+              <!DOCTYPE html>
+              <html>
+              <head>
+              <title>Welcome to nginx!</title>
+              <style>
+              body {
+                  width: 35em;
+                  margin: 0 auto;
+                  font-family: Tahoma, Verdana, Arial, sans-serif;
+              }
+              </style>
+              </head>
+              <body>
+              <h1>Welcome to nginx $RAND!</h1>
+
+              <p>If you see this page, the nginx web server is successfully installed and
+              working. Further configuration is required.</p>
+
+              <p>For online documentation and support please refer to
+              <a href="http://nginx.org/">nginx.org</a>.</p>
+
+              <p><em>Thank you for using nginx.</em></p>
+              </body>
+              </html>
+              EOF
+      volumes:
+        - name: pod-containers-volume
+          emptyDir: {} # меж-контейнерный storage
+        - name: sys-log
+          hostPath: # host storage
+            path: '/var/log/cache/'
       containers:
         - name: app-container
-          image: 'grinway/k8s_test:v18'
+          image: 'nginx:latest'
+          volumeMounts:
+            - name: pod-containers-volume
+              mountPath: '/usr/share/nginx/html/'
+            - name: sys-log
+              mountPath: '/var/log/cache/'
+              readOnly: true
           ports:
             - containerPort: 80
           resources:
             requests:
               cpu: '20m'
               memory: '20Mi'
+              ephemeral-storage: '20Mi'
           livenessProbe:
             initialDelaySeconds: 30
             periodSeconds: 30

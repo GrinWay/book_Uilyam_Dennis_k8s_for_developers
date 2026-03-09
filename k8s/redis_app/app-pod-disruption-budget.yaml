@@ -1,0 +1,9 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: app-deploy-budget
+spec:
+  maxUnavailable: 1 # maxUnavailable pods при прерывании работы - SIGTERM, а не при обновлении
+  selector:
+    matchLabels:
+      pod: app-pod-label-v18
