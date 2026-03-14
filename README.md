@@ -45,12 +45,12 @@
     - обязателен **terminationGracePeriodSeconds**
 - **Внутрикластерный DNS:**
     - **SERVICE DNS:**
-        - curl [http://SERVICE_NAME**.**NAMESPACE](http://SERVICE_NAME.NAMESPACE_NAME).svc
-        - curl [http://SERVICE_NAME**.**NAMESPACE](http://SERVICE_NAME.NAMESPACE_NAME)
-        - curl [http://SERVICE_NAME](http://SERVICE_NAME.NAMESPACE_NAME) если NAMESPACE = default
+        - curl http://SERVICE_NAME.NAMESPACE.svc
+        - curl http://SERVICE_NAME.NAMESPACE
+        - curl SERVICE_NAME.NAMESPACE если NAMESPACE = default
     - **STATEFUL_SET DNS:**
-        - mysql -h STS_NAME**\-**POD_NUMBER**.**SERVICE_NAME**.**NAMESPACE
-        - mysql -h STS_NAME**\-**POD_NUMBER**.**SERVICE_NAME если NAMESPACE = default
+        - mysql -h STS_NAME-POD_NUMBER.SERVICE_NAME.NAMESPACE
+        - mysql -h STS_NAME-POD_NUMBER.SERVICE_NAME если NAMESPACE = default
 - Secret можно использовать в ENV & VOLUME:
     - PodSpec.envFrom.secretRef
     - env.valueFrom.secretKeyRef
