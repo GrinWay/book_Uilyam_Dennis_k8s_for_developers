@@ -1,0 +1,44 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: app
+  namespace: app
+rules:
+
+  # groups (part of apiVersion)
+  # "" is the Base group
+  - apiGroups:
+      - ""
+
+    # objects
+    resources:
+      - namespace
+
+    # operations
+    verbs:
+      - get
+
+  - apiGroups:
+      - ""
+    resources:
+      - events
+      - pods
+      - pods/logs
+      - pods/portforward
+      - services
+      - secrets
+      - configmaps
+      - persistentvolumeclaims
+    verbs:
+      - "*"
+
+  - apiGroups:
+      - apps
+      - autoscaling
+      - batch
+      - networking.k8s.io
+      - policy
+    resources:
+      - "*"
+    verbs:
+      - "*"

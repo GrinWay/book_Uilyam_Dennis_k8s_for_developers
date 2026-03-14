@@ -3,12 +3,17 @@ apiVersion: storage.k8s.io/v1
 kind: StorageClass # Класс хранения, ответственен за хранение в PV
 metadata:
   annotations:
+#    kubectl.kubernetes.io/last-applied-configuration: |
+#      {"allowVolumeExpansion":true,"apiVersion":"storage.k8s.io/v1","kind":"StorageClass","metadata":{"annotations":{},"name":"fast.ru-8a"},"parameters":{"availability":"ru-8a","type":"fast.ru-8a"},"provisioner":"cinder.csi.openstack.org"}
     # Optional: Использовать этот storage class by default?
     storageclass.kubernetes.io/is-default-class: "true"
   name: my-standard
 parameters:
-  type: pd-standard
-provisioner: k8s.io/minikube-hostpath
-reclaimPolicy: Delete # Delete - Удалить PV после удаления PVC.
+  # cloud platform dependent
+  type: fast.ru-8a
+provisioner: cinder.csi.openstack.org
+reclaimPolicy: Retain  # Delete - Удалить PV после удаления PVC.
                        # Retain - PV живёт своей жизнью, отдельно от k8s. Сохранить PV ни смотря ни на что (после удаления PVC или кластера).
 volumeBindingMode: Immediate
+# Разрешить увеличивать pvc
+allowVolumeExpansion: true

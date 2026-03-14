@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: isolate-namespace-egress
+spec:
+  # podSelector: {} - Apply to all pods in this namespace
+  # От всех подов текущего ns разрешаю трафик к:
+  podSelector: { }
+  policyTypes:
+    - Egress
+  # Allow rules
+  egress:
+    - to:
+        # namespaceSelector: {} - Allow any namespace
+        # But if commented      - Allow only this namespace
+#        - namespaceSelector:
+#            matchLabels:
+#              kubernetes.io/metadata.name: default
+#          podSelector: {}
+        # podSelector: {}       - Allow any pod
+        # But if commented      - Allow only this pod
+        - podSelector: {}
+#          namespaceSelector: {}
+        # Allow internet
+#        - ipBlock:
+#            cidr: '0.0.0.0/0'
+#            except:
+#              - '10.0.0.0/8'

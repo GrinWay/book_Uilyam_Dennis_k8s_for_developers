@@ -25,58 +25,67 @@ spec:
       # node req
       tolerations:
         - operator: Exists
-      initContainers:
-        - name: 'show-secret-env-container'
-          image: 'ubuntu:24.04'
-          volumeMounts:
-            - name: pod-containers-volume
-              mountPath: '/usr/share/nginx/html/'
-          command:
-            - /bin/sh
-            - -c
-            - |
-              RAND=$(hostname; date +%s%N)
-              cat > /usr/share/nginx/html/index.html <<EOF
-              <!DOCTYPE html>
-              <html>
-              <head>
-              <title>Welcome to nginx!</title>
-              <style>
-              body {
-                  width: 35em;
-                  margin: 0 auto;
-                  font-family: Tahoma, Verdana, Arial, sans-serif;
-              }
-              </style>
-              </head>
-              <body>
-              <h1>Welcome to nginx $RAND!</h1>
-
-              <p>If you see this page, the nginx web server is successfully installed and
-              working. Further configuration is required.</p>
-
-              <p>For online documentation and support please refer to
-              <a href="http://nginx.org/">nginx.org</a>.</p>
-
-              <p><em>Thank you for using nginx.</em></p>
-              </body>
-              </html>
-              EOF
-      volumes:
-        - name: pod-containers-volume
-          emptyDir: {} # меж-контейнерный storage
-        - name: sys-log
-          hostPath: # host storage
-            path: '/var/log/cache/'
+#      initContainers:
+#        - name: 'show-secret-env-container'
+#          image: 'ubuntu:24.04'
+#          volumeMounts:
+#            - name: pod-containers-volume
+#              mountPath: '/usr/share/nginx/html/'
+#          command:
+#            - /bin/sh
+#            - -c
+#            - |
+#              RAND=$(hostname; date +%s%N)
+#              cat > /usr/share/nginx/html/index.html <<EOF
+#              <!DOCTYPE html>
+#              <html>
+#              <head>
+#              <title>Welcome to nginx!</title>
+#              <style>
+#              body {
+#                  width: 35em;
+#                  margin: 0 auto;
+#                  font-family: Tahoma, Verdana, Arial, sans-serif;
+#              }
+#              </style>
+#              </head>
+#              <body>
+#              <h1>Welcome to nginx $RAND!</h1>
+#
+#              <p>If you see this page, the nginx web server is successfully installed and
+#              working. Further configuration is required.</p>
+#
+#              <p>For online documentation and support please refer to
+#              <a href="http://nginx.org/">nginx.org</a>.</p>
+#
+#              <p><em>Thank you for using nginx.</em></p>
+#              </body>
+#              </html>
+#              EOF
+#      volumes:
+#        - name: pod-containers-volume
+#          emptyDir: {} # меж-контейнерный storage
+#        - name: sys-log
+#          hostPath: # host storage
+#            path: '/var/log/cache/'
       containers:
         - name: app-container
-          image: 'nginx:latest'
-          volumeMounts:
-            - name: pod-containers-volume
-              mountPath: '/usr/share/nginx/html/'
-            - name: sys-log
-              mountPath: '/var/log/cache/'
-              readOnly: true
+          image: 'grinway/k8s_test:v18'
+          securityContext:
+            seccompProfile:
+              type: RuntimeDefault
+            runAsNonRoot: true
+            runAsUser: 100
+            runAsGroup: 101
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+#          volumeMounts:
+#            - name: pod-containers-volume
+#              mountPath: '/usr/share/nginx/html/'
+#            - name: sys-log
+#              mountPath: '/var/log/cache/'
+#              readOnly: true
           ports:
             - containerPort: 80
           resources:

@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  annotations:
+    pv.kubernetes.io/provisioned-by: cinder.csi.openstack.org
+    volume.kubernetes.io/provisioner-deletion-secret-name: ""
+    volume.kubernetes.io/provisioner-deletion-secret-namespace: ""
+  creationTimestamp: "2026-03-14T09:32:10Z"
+  finalizers:
+  - kubernetes.io/pv-protection
+  - external-attacher/cinder-csi-openstack-org
+  name: pvc-ddc0b765-e521-4618-9f6f-f01a67107acb
+  resourceVersion: "8159"
+  uid: e8269398-8db5-434e-8e8f-4482d6e9ac90
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 1Gi
+  claimRef:
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    name: app-mysql-pvc-app-mysql-v1-0
+    namespace: default
+    resourceVersion: "7636"
+  csi:
+    driver: cinder.csi.openstack.org
+    fsType: ext4
+    volumeAttributes:
+      storage.kubernetes.io/csiProvisionerIdentity: 1773478748211-4365-cinder.csi.openstack.org
+    # Уникальный аттрибут PV
+    # У selectel пишется на странице самого PV
+    volumeHandle: 88c1f6b1-dafe-46e0-ae89-f3074a75333e
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: topology.cinder.csi.openstack.org/zone
+          operator: In
+          values:
+          - ru-8a
+  persistentVolumeReclaimPolicy: Retain
+  volumeMode: Filesystem
+status:
+  lastPhaseTransitionTime: "2026-03-14T09:33:30Z"

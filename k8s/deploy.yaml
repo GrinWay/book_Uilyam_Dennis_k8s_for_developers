@@ -134,7 +134,7 @@ spec:
 
           # WORK: grinway/k8s_test:v3 grinway/k8s_test:v4 ERR: docker-app:v12
           # cr.selcloud.ru/grinway/k8s_test:v14
-          image: 'grinway/k8s_test:v15' # 1 Локальный образ
+          image: 'grinway/k8s_test:v18' # 1 Локальный образ
           #     imagePullPolicy: Never # 2 Локальная политика извлечения образов
           # 3 RUN: minikube image load
 

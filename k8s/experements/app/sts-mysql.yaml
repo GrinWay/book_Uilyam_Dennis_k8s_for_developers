@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: app-mysql-v1
+spec:
+  selector:
+    matchLabels:
+      pod: app-mysql-pod-label-v1
+  serviceName: app-mysql-service
+  replicas: 1
+  volumeClaimTemplates:
+    - metadata:
+        name: app-mysql-pvc
+      spec:
+#        storageClassName: 'my-standard'
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: '500Mi'
+  template:
+    metadata:
+      labels:
+        pod: app-mysql-pod-label-v1
+    spec:
+      terminationGracePeriodSeconds: 2
+      securityContext:
+        fsGroup: 999
+      containers:
+        - image: 'mysql:8.0.33'
+          name: app-mysql
+          securityContext:
+            # Ограничение системных вызовов (seccomp-профиль)
+            seccompProfile:
+              # Контейнер использует default runtime
+              type: RuntimeDefault
+            runAsNonRoot: true
+            runAsUser: 999
+            runAsGroup: 999
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - mountPath: '/var/lib/mysql'
+              name: app-mysql-pvc
+          resources:
+            requests:
+              cpu: '200m'
+              memory: '200Mi'
+              ephemeral-storage: '200Mi'
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: root
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-mysql-service
+spec:
+  ports:
+    - port: 3306
+  clusterIP: None # Headless service
+                  # A-type запись (IP каждого пода), не виртуальный внутрикластерный IP
+  selector:
+    pod: app-mysql-pod-label-v1

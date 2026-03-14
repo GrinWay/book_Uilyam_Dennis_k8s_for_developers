@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: isolate-namespace-ingress
+spec:
+  # podSelector: {} - Apply to all pods in this namespace
+  # Ко всем подам текущего ns разрешаю трафик из:
+  podSelector: { }
+  policyTypes:
+    - Ingress
+  # Allow rules
+  ingress:
+    - from:
+#        - namespaceSelector: {}
+        # Allow all pods traffic in this namespace
+          - podSelector: { }
+        # Allow internet
+#        - ipBlock:
+#            cidr: '0.0.0.0/0'
+            # client entrypoint - потому что k8s не может обращаться к этому namespace
+#            except:
+#              - '10.0.0.0/8'

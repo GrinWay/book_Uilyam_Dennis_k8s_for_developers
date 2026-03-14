@@ -1,0 +1,15 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"allowVolumeExpansion":true,"apiVersion":"storage.k8s.io/v1","kind":"StorageClass","metadata":{"annotations":{},"name":"fast.ru-8a"},"parameters":{"availability":"ru-8a","type":"fast.ru-8a"},"provisioner":"cinder.csi.openstack.org"}
+  name: my-fast.ru-8a
+  resourceVersion: "587"
+parameters:
+  availability: ru-8a
+  type: fast.ru-8a
+provisioner: cinder.csi.openstack.org
+reclaimPolicy: Retain
+volumeBindingMode: Immediate
+allowVolumeExpansion: true

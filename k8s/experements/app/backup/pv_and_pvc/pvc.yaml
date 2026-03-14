@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    volume.beta.kubernetes.io/storage-provisioner: cinder.csi.openstack.org
+    volume.kubernetes.io/storage-provisioner: cinder.csi.openstack.org
+  creationTimestamp: "2026-03-14T09:35:08Z"
+  finalizers:
+  - kubernetes.io/pvc-protection
+  labels:
+    pod: app-mysql-pod-label-v1
+  name: app-mysql-pvc-app-mysql-v1-0
+  namespace: default
+  resourceVersion: "8480"
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi
+  volumeMode: Filesystem
+  volumeName: pvc-ddc0b765-e521-4618-9f6f-f01a67107acb
+status:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 1Gi

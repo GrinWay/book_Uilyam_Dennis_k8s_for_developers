@@ -1,0 +1,140 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-v1
+spec:
+  replicas: 3
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      pod: app-v1
+  # Pod
+  template:
+    metadata:
+      labels:
+        pod: app-v1
+    spec:
+      terminationGracePeriodSeconds: 2
+      volumes:
+        - name: nginx-config-classmap-volume
+          configMap:
+            name: nginx-config-classmap
+        - name: pod-containers-volume
+          emptyDir:
+            # tmpfs
+            medium: Memory
+      initContainers:
+        - name: default-nginx-template-distinction-init-container
+          # local_nginx:1.28-alpine-perl
+          image: 'grinway/local_nginx:1.28-alpine-perl'
+          securityContext:
+            seccompProfile:
+              type: RuntimeDefault
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: pod-containers-volume
+              mountPath: '/usr/share/nginx/html/'
+          command:
+            - /bin/sh
+            - -c
+            - |
+              cat > /usr/share/nginx/html/index.html <<EOF
+              <!DOCTYPE html>
+              <html>
+              <head>
+              <title>Welcome to nginx!</title>
+              <style>
+              body {
+                  width: 35em;
+                  margin: 0 auto;
+                  font-family: Tahoma, Verdana, Arial, sans-serif;
+              }
+              </style>
+              </head>
+              <body>
+              <h1>Welcome to nginx!</h1>
+              
+              <h3>
+                Node: $K8S_NODE_NAME
+              </h3>
+              
+              <h3>
+                Namespace: $K8S_NAMESPACE
+              </h3>
+              
+              <h3>
+                Host: $K8S_POD_NAME
+              </h3>
+
+              <p>If you see this page, the nginx web server is successfully installed and
+              working. Further configuration is required.</p>
+
+              <p>For online documentation and support please refer to
+              <a href="http://nginx.org/">nginx.org</a>.</p>
+
+              <p><em>Thank you for using nginx.</em></p>
+              </body>
+              </html>
+              EOF
+          env:
+            - name: K8S_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  # value from field ref to k8s field path
+                  fieldPath: metadata.namespace
+            - name: K8S_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: K8S_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+      containers:
+        - name: app-container
+          # cd ~/MY/project/k8s/app_nginx
+          # du --build --remove-orphans && docker tag app_nginx-app_nginx:latest local_nginx:1.28-alpine-perl
+          # minikube image rm local_nginx:1.28-alpine-perl && minikube image load local_nginx:1.28-alpine-perl
+          image: 'grinway/local_nginx:1.28-alpine-perl'
+          volumeMounts:
+            - name: nginx-config-classmap-volume
+              mountPath: '/etc/nginx/conf.d/'
+            - name: pod-containers-volume
+              mountPath: '/usr/share/nginx/html/'
+          ports:
+            - containerPort: 8181
+          securityContext:
+            seccompProfile:
+              type: RuntimeDefault
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: '20m'
+              memory: '20Mi'
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config-classmap
+data:
+  default.conf: |
+    server {
+        listen 8181;
+        server_name 0.0.0.0;
+    
+        location / {
+            root /usr/share/nginx/html;
+            index index.php index.phtml index.html;
+        }
+    }

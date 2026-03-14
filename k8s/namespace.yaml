@@ -1,0 +1,10 @@
+# SPA - встроенный в k8s контроллер доступа
+# Create a Namespace and apply Controller Admissions
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: app
+  labels:
+    # restricted - требует самую безопасную настройку pod (securityContext...)
+    pod-security.kubernetes.io/enforce: restricted # privileged baseline restricted
+    pod-security.kubernetes.io/enforce-version: 'v1.28'

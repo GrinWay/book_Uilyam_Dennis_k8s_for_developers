@@ -2,16 +2,15 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: app-daemon-set
-# DaemonSetSpec
 spec:
   selector:
     matchLabels:
-      pod: app-pod-label-v18
+      ds: app-pod-label-v18
+  # Pod
   template:
     metadata:
       labels:
-        pod: app-pod-label-v18
-    # PodSpec
+        ds: app-pod-label-v18
     spec:
       terminationGracePeriodSeconds: 2
       volumes:
@@ -22,10 +21,10 @@ spec:
         - name: sys-log-container
           image: 'grinway/k8s_test:v18'
           securityContext:
-            runAsNonRoot: true
-            runAsUser: 65534 # 65534 === nobody
-            runAsGroup: 65534 # 65534 === nobody
-            allowPrivilegeEscalation: true
+#            runAsNonRoot: true
+#            runAsUser: 100
+#            runAsGroup: 101
+            allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
           resources:

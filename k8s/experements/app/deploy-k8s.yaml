@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-v1
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      pod: k8s-v1
+  # Pod
+  template:
+    metadata:
+      labels:
+        pod: k8s-v1
+    spec:
+      # k8s автоматически монтирует токен
+      serviceAccountName: sa
+      terminationGracePeriodSeconds: 2
+      # Требует наличия gvisor на Node
+#      runtimeClassName: gvisor
+      containers:
+        - name: k8s-container-v1
+          # minikube image rm bitnami/kubectl:latest && minikube image load bitnami/kubectl:latest
+          image: 'bitnami/kubectl:latest'
+          #imagePullPolicy: Never # !FOR LOCAL!
+          command:
+            - sleep
+          args:
+            - infinity
+          securityContext:
+            seccompProfile:
+              type: RuntimeDefault
+            runAsNonRoot: true
+            runAsUser: 999
+            runAsGroup: 999
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: '10m'
+              memory: '10Mi'
